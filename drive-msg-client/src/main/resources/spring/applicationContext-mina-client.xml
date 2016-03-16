@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+    http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+    http://www.springframework.org/schema/context 
+    http://www.springframework.org/schema/context/spring-context-3.0.xsd
+    http://www.springframework.org/schema/aop
+    http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
+    http://www.springframework.org/schema/tx 
+    http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+    http://www.springframework.org/schema/util 
+    http://www.springframework.org/schema/util/spring-util-2.0.xsd
+    ">
+    
+    <bean id="receiveCallback" class="com.drive.cool.message.callback.impl.ReceiveCallback"/>
+	<bean id="minaClientHandler" class="com.drive.cool.msg.client.handler.MinaClientHandler">
+		<property name="receiveCallback" ref="receiveCallback"></property>
+	</bean>
+	
+	<bean id="minaClient" class="com.drive.cool.msg.client.MinaClient" lazy-init="false">
+		<property name="configList">
+			<list>
+				<bean class="com.drive.cool.msg.client.conf.MinaServerConfig">
+					<property name="ip" value="${mina.target.host}"></property>
+					<property name="port" value="${mina.target.port}"></property>
+					<property name="size" value="${mina.target.size}"></property>			
+				</bean>
+			</list>
+		</property>
+		<property name="receiveCallback" ref="receiveCallback"></property>
+	</bean>
+	
+    <bean id="rcpBeanFactory" class="com.drive.cool.rcp.RcpBeanFactory">
+    	<property name="basePackage" value="com.drive.cool"></property>
+    </bean>
+</beans>

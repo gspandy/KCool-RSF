@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans 
+    xmlns="http://www.springframework.org/schema/beans" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:p="http://www.springframework.org/schema/p" 
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:aop="http://www.springframework.org/schema/aop"
+    xmlns:tx="http://www.springframework.org/schema/tx"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans 
+    http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+    http://www.springframework.org/schema/context 
+    http://www.springframework.org/schema/context/spring-context-3.0.xsd
+    http://www.springframework.org/schema/aop
+    http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
+    http://www.springframework.org/schema/tx 
+    http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+    http://www.springframework.org/schema/util 
+    http://www.springframework.org/schema/util/spring-util-2.0.xsd
+    ">
+
+	<import resource="classpath*:service/service-*.xml"/>
+
+	<!-- service工厂，用于初始化各服务 -->
+	<bean id="serviceFactory" class="com.drive.cool.message.service.impl.ServiceFactoryImpl"/>
+	<!-- 服务端handler -->
+    <bean id="minaServerHandler" class="com.drive.cool.msg.MinaServerHandler">
+    	<property name="serviceFactory" ref="serviceFactory"></property>
+    </bean>
+    <!-- 系统过滤器 -->
+    <bean id="loggingFilter" class="org.apache.mina.filter.logging.LoggingFilter"></bean>
+    
+    <bean id="messageDecoder" class="com.drive.cool.message.pack.MessageDecoder" />
+	<bean id="messageEncoder" class="com.drive.cool.message.pack.MessageEncoder" />
+    
+    <bean id="codecFilter" class="org.apache.mina.filter.codec.ProtocolCodecFilter">
+        <constructor-arg>
+            <bean class="com.drive.cool.msg.codec.MessageCodecFactory">
+				<property name="protocolDecoder" ref="messageDecoder"></property>
+				<property name="protocolEncoder" ref="messageEncoder"></property>
+			</bean>
+        </constructor-arg>
+    </bean>
+    <bean id="filterChainBuilder"
+        class="org.apache.mina.core.filterchain.DefaultIoFilterChainBuilder">
+        <property name="filters">
+            <map>
+                <entry key="loggingFilter" value-ref="loggingFilter" />
+                <entry key="codecFilter" value-ref="codecFilter" />
+            </map>
+        </property>
+    </bean>
+    <bean class="org.springframework.beans.factory.config.CustomEditorConfigurer">
+        <property name="customEditors">
+            <map>
+                <entry key="java.net.SocketAddress">
+                    <bean class="org.apache.mina.integration.beans.InetSocketAddressEditor" />
+                </entry>
+            </map>
+        </property>
+    </bean>
+    <!-- 服务端配置 -->
+    <bean id="ioAcceptor" class="org.apache.mina.transport.socket.nio.NioSocketAcceptor"
+        init-method="bind" destroy-method="unbind">
+        <property name="defaultLocalAddress" value="${mina.server.port}" />
+        <property name="handler" ref="minaServerHandler" />
+        <property name="filterChainBuilder" ref="filterChainBuilder" />
+        <property name="reuseAddress" value="true" />
+    </bean>
+</beans>
